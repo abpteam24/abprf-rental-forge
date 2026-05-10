@@ -5,17 +5,17 @@
 	if ( ! class_exists( 'ABPRF_Category' ) ) {
 		class ABPRF_Category {
 			public function __construct() {
-				add_action( 'abprf_load_category', array( $this, 'load_category' ) );
+				add_action( 'abprf_global_category', array( $this, 'global_category' ) );
 				add_action( 'wp_ajax_abprf_save_category', array( $this, 'save_category' ) );
 				add_action( 'wp_ajax_abprf_cat_delete', array( $this, 'cat_delete' ) );
 				add_action( 'wp_ajax_abprf_cat_add_edit', array( $this, 'cat_add_edit' ) );
 			}
 
-			public function load_category( $abprf_info ) {
+			public function global_category( $abprf_info ) {
 				$category_label = isset( $abprf_info['category_label'] ) && $abprf_info['category_label'] ? $abprf_info['category_label'] : __( 'Category', 'abprf-rental-forge' );
 				?>
-                <div class="_section_xs ">
-                    <div class="category_list">
+                <div class="tab_item" data-tabs="#abprf_global_category">
+                    <div class="category_list _ov_auto">
 						<?php $this->load_cat_list(); ?>
                     </div>
                     <div class="_divider_xs"></div>
@@ -51,7 +51,7 @@
 						$this->update_category();
 						ob_start();
 						if ( $page_type == 'post' ) {
-							ABPRF_Layout::category_selection();
+							self::category_selection();
 						} elseif ( $page_type == 'list' ) {
 							$this->load_cat_list();
 						}
@@ -100,18 +100,18 @@
 
 			public function load_cat_list(): void {
 				$all_categories = ABPRF_Function::get_option( 'abprf_category' );
-				$count      = 1;
+				$count          = 1;
 				if ( ! empty( $all_categories ) && is_array( $all_categories ) && sizeof( $all_categories ) > 0 ) { ?>
                     <table class="_abprf">
                         <thead>
                         <tr>
                             <th><?php esc_html_e( 'SI', 'abprf-rental-forge' ) ?></th>
-                            <th><?php esc_html_e( 'Title', 'abprf-rental-forge' ) ?></th>
+                            <th class="_min_200"><?php esc_html_e( 'Category Title', 'abprf-rental-forge' ) ?></th>
                             <th><?php esc_html_e( 'ID', 'abprf-rental-forge' ) ?></th>
-                            <th><?php esc_html_e( 'Description', 'abprf-rental-forge' ) ?></th>
-                            <th><?php esc_html_e( 'Shortcode Post', 'abprf-rental-forge' ) ?></th>
-                            <th><?php esc_html_e( 'Shortcode Property', 'abprf-rental-forge' ) ?></th>
-                            <th><?php esc_html_e( 'Action', 'abprf-rental-forge' ) ?></th>
+                            <th class="_min_150"><?php esc_html_e( 'Description', 'abprf-rental-forge' ) ?></th>
+                            <th class="_w_250"><?php esc_html_e( 'Shortcode Post', 'abprf-rental-forge' ) ?></th>
+                            <th class="_w_250"><?php esc_html_e( 'Shortcode Property', 'abprf-rental-forge' ) ?></th>
+                            <th class="_w_100"><?php esc_html_e( 'Action', 'abprf-rental-forge' ) ?></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -124,14 +124,14 @@
                                 <th class="_text_left"><a href="<?php echo esc_url( get_term_link( $term_id ) ); ?>" target="_blank" class="_abprf_fs_h5 _color_theme"><?php echo esc_html( $name ); ?></a></th>
                                 <th><?php echo esc_html( $term_id ); ?></th>
                                 <td><?php echo esc_html( $description ); ?></td>
-                                <th><code> [abprf_cat_post id="<?php echo esc_attr( $term_id ); ?>"]</code></th>
-                                <th><code> [abprf_cat_property id="<?php echo esc_attr( $term_id ); ?>"]</code></th>
-                                <td>
+                                <th><code> [abprf-post cat_id="<?php echo esc_attr( $term_id ); ?>"]</code></th>
+                                <th><code> [abprf-property cat_id="<?php echo esc_attr( $term_id ); ?>"]</code></th>
+                                <th>
                                     <div class="_f_wrap">
                                         <button type="button" class="_btn_light_yellow_mar_r_xxs" data-cat_id="<?php echo esc_attr( $term_id ); ?>" data-target-popup="#abprf_category_popup" title="<?php echo esc_attr__( 'Edit : ', 'abprf-rental-forge' ) . ' ' . esc_attr( $name ); ?>">✍️</button>
                                         <button type="button" class="_btn_light_danger_xxs abprf_cat_delete" data-cat_id="<?php echo esc_attr( $term_id ); ?>" title="<?php echo esc_attr__( 'Trash : ', 'abprf-rental-forge' ) . ' ' . esc_attr( $name ); ?>">❌</button>
                                     </div>
-                                </td>
+                                </th>
                             </tr>
 							<?php $count ++;
 						} ?>
@@ -194,6 +194,28 @@
                     <button type="submit" class="_btn_theme"><span class="_mar_r_xxs">💾</span><?php echo ( ! empty( $term_id ) ? esc_html__( 'Update', 'abprf-rental-forge' ) : esc_html__( 'Save', 'abprf-rental-forge' ) ) . ' ' . esc_html( $category_label ); ?></button>
                 </form>
 				<?php
+			}
+
+			public static function category_selection( $_category = '' ): void {
+				$category_array = ! empty( $_category ) ? explode( ',', $_category ) : [];
+				$all_categories = ABPRF_Function::get_option( 'abprf_category' );
+				if ( ! empty( $all_categories ) && is_array( $all_categories ) && sizeof( $all_categories ) > 0 ) { ?>
+                    <div class="custom_checkbox">
+                        <input type="hidden" name="category" value="<?php echo esc_attr( $_category ); ?>"/>
+						<?php foreach ( $all_categories as $key => $category ) {
+							$name = is_array( $category ) && array_key_exists( 'name', $category ) ? $category['name'] : ''; ?>
+                            <div class="checkbox_item _min_100">
+                                <button type="button" class="_btn_white_xs <?php echo esc_attr( in_array( $key, $category_array ) ? 'rf_active' : '' ); ?>" data-checked="<?php echo esc_attr( $key ); ?>" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                    <span data-icon class="_mar_r_xs far <?php echo esc_attr( in_array( $key, $category_array ) ? 'far fa-check-square' : 'fa-square' ); ?>"></span><?php echo esc_html( $name ); ?>
+                                </button>
+                            </div>
+						<?php } ?>
+                    </div>
+				<?php } else { ?>
+                    <p><?php echo esc_html( ABPRF_Layout::array_info( 'no_category' ) ); ?></p>
+                    <button type="button" class="_btn_default" data-target-popup="#abprf_category_popup"><span class="_mar_r_xs">➕</span><?php echo esc_html__( 'Add New', 'abprf-rental-forge' ) . ' ' . esc_html( ABPRF_Function::get_options( 'abprf_configuration', 'category_label', __( 'Category', 'abprf-rental-forge' ) ) ); ?></button>
+					<?php
+				}
 			}
 		}
 		new ABPRF_Category();

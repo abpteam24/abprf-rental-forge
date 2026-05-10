@@ -42,7 +42,7 @@
 					$abprf_infos['date_info']['start_time'] = $start;
 					$abprf_infos['date_info']['end_time']   = $end;
 					$date_infos                             = [];
-					$properties                             = ABPRF_Query::get_property( [ 'post_id' => $post_id, 'rent_continue' => 'on', 'price_rule' => $rent_rule, 'status' => 'publish' ] );
+					$properties                             = ABPRF_Query::get_property( [ 'post_id' => $post_id, 'rent_continue' => 'on', 'rent_rule' => $rent_rule, 'status' => 'publish' ] );
 					ob_start();
 					if ( ! empty( $post_id ) && $post_id > 0 ) {
 						$date_infos = json_decode( get_transient( 'abprf_date_infos_' . $post_id ), true );

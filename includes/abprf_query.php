@@ -75,11 +75,13 @@
 				return array_unique( $all_data );
 			}
 
-			public static function get_property( $filters = array(), $limit = 0, $offset = 0, $count = false ) {
+			public static function get_property( $filters = array(), $count = false ) {
 				global $wpdb;
 				$table_name = $wpdb->prefix . 'abprf_property';
 				$conditions = [];
 				$params     = [];
+				$limit      = array_key_exists( 'limit', $filters ) && ! empty( $filters['limit'] ) ? $filters['limit'] : 0;
+				$offset      = array_key_exists( 'offset', $filters ) && ! empty( $filters['offset'] ) ? $filters['offset'] : 0;
 				/***************/
 				$post_id = array_key_exists( 'post_id', $filters ) && ! empty( $filters['post_id'] ) ? $filters['post_id'] : null;
 				if ( ! empty( $post_id ) && $post_id !== 'all' ) {
@@ -104,17 +106,10 @@
 					$params[]     = trim( $rent_continue );
 				}
 				/***************/
-				$price_rules = array_key_exists( 'price_rule', $filters ) && ! empty( $filters['price_rule'] ) ? $filters['price_rule'] : null;
-				if ( ! empty( $price_rules ) ) {
-					$price_rules = explode( ',', $price_rules );
-					if ( is_array( $price_rules ) && sizeof( $price_rules ) > 0 ) {
-						$price_rule_condition = [];
-						foreach ( $price_rules as $rule ) {
-							$price_rule_condition[] = "FIND_IN_SET(%s, price_rule) > 0";
-							$params[]               = trim( $rule );
-						}
-						$conditions[] = '(' . implode( ' OR ', $price_rule_condition ) . ')';
-					}
+				$rent_rule = array_key_exists( 'rent_rule', $filters ) && ! empty( $filters['rent_rule'] ) ? $filters['rent_rule'] : null;
+				if ( ! empty( $rent_rule ) ) {
+					$conditions[] = "rent_rule = %s";
+					$params[]     = trim( $rent_rule );
 				}
 				/***************/
 				$status = array_key_exists( 'status', $filters ) && ! empty( $filters['status'] ) ? $filters['status'] : null;

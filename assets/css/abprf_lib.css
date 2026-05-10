@@ -330,6 +330,9 @@
 	div.abprf_area [class*="_section_card"]:hover {transform: translateY(-2px);}
 
 	/*=============================*/
+	div.abprf_area [class*="_group_list"]{display: -webkit-flex;display: flex;-webkit-flex-wrap: wrap;flex-wrap: wrap;gap: var(--rf_gap_xs);}
+	div.abprf_area [class*="_group_list"] [class*="_list_item"]{background-color: var(--rf_color_light_2); width: 100%;min-width: 300px;padding: var(--rf_gap_xxs);display: -webkit-flex;display: flex;-webkit-justify-content: space-between;justify-content: space-between;-webkit-align-items: center;align-items: center;-webkit-flex: 1;flex: 1;}
+	/*=============================*/
 	div.abprf_area  [class*="_box_1"] {background: white; border-radius: 12px;  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; border: 2px solid transparent;position: relative;}
 	div.abprf_area  [class*="_box_1"].rf_active {border-color: var(--rf_color_theme); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.2);}
 	div.abprf_area  [class*="_box_1"]:hover {transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);}
@@ -485,7 +488,7 @@
 	div.abprf_area [class*="_group_content"] { display: -webkit-inline-flex; display: inline-flex; font-size: var(--rf_fs); text-align: center; position: relative; -webkit-border-radius: var(--rf_br); border-radius: var(--rf_br); }
 	div.abprf_area [class*="_group_content"] > * {margin: 0;border-radius: 0; }
 	div.abprf_area [class*="_group_content"] button:not(div.abprf_area [class*="_group_content"] button:last-child) {border-right: none;}
-	div.abprf_area [class*="_group_content"] [class*="_form_control"] { text-align: center; background-color: var(--rf_color_white); height: 100%; border-radius: 0;min-height: auto;min-width: auto; }
+	div.abprf_area [class*="_group_content"] [class*="_form_control"] { text-align: center; background-color: var(--rf_color_white); height: 100%; border-radius: 0;min-height: auto;min-width: 75px; }
 	div.abprf_area [class*="_group_content"] [class*="_group_content"] {height: 100%;background-color: var(--rf_color_white);}
 	div.abprf_area [class*="_group_content"] [class*="_group_content"] * {border-radius: 0;}
 	div.abprf_area [class*="_group_content"] textarea[class*="_form_control"] { text-align: left; }
@@ -606,6 +609,7 @@
 	div.abprf_area [class*="_w_150"] { width: 150px; min-width: 150px; }
 	div.abprf_area [class*="_w_175"] { width: 175px; min-width: 175px; }
 	div.abprf_area [class*="_w_200"] { width: 200px; min-width: 200px; }
+	div.abprf_area [class*="_w_250"] { width: 250px; min-width: 250px; }
 	div.abprf_area [class*="_w_300"] { width: 300px; min-width: 300px;}
 	div.abprf_area [class*="_w_400"] { width: 400px; min-width: 400px; }
 	div.abprf_area [class*="_w_500"] { width: 500px; min-width: 500px; }
@@ -716,7 +720,7 @@
 }
 /******************************************************************** Load More************************************************/
 @media only screen and (min-width: 10px) {
-	div.abprf_area .abprf_load_more { color: var(--rf_color_default); }
+	div.abprf_area .load_more { text-align: left;}
 	div.abprf_area [data-read] { color: var(--rf_color_theme); cursor: pointer;}
 }
 /******************************************************************** Woocommerce ************************************************/
@@ -775,6 +779,7 @@
 	/*=============================*/
 	div.abprf_area [data-collapse],
 	div.abprf_area [data-close],
+	div.abprf_area .hide_on_load,
 	div.abprf_area [class*="_d_none"] { display: none; }
 	div.abprf_area [class*="_d_block"] { display: block; }
 	div.abprf_area [class*="_d_inline_block"] {display: inline-block;}
@@ -1024,8 +1029,7 @@
 	div.abprf_area [class*="_btn_light_info"] span,
 	div.abprf_area [class*="_color_info"] { color: var(--rf_color_info); }
 	div.abprf_area [class*="_bg_info"] { background-color: var(--rf_color_info); }
-	div.abprf_area .info_text {display: block;font-weight: normal;font-size: var(--rf_fs_small);color: var(--rf_color_info);}
-	div.abprf_area .info_text i::before {margin: 0 var(--rf_gap_xxs) 0 0;color: var(--rf_color_theme_77); }
+	div.abprf_area .info_text {display: -webkit-flex;display:flex;font-weight: normal;font-size: var(--rf_fs_small);color: var(--rf_color_info);text-align: left;}
 	/*****required*********/
 	div.abprf_area [class*="_color_required"] { color: var(--rf_color_required); }
 	div.abprf_area [class*="_bg_required"] { background-color: var(--rf_color_required); }

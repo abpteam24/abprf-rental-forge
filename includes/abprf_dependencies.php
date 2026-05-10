@@ -16,8 +16,8 @@
 			}
 
 			public function admin_enqueue(): void {
-				$configuration                = ABPRF_Function::get_option( 'abprf_configuration' );
-				$label=isset( $configuration['label'] ) && $configuration['label'] ? $configuration['label'] : __( 'RentalForge', 'abprf-rental-forge' );
+				$configuration = ABPRF_Function::get_option( 'abprf_configuration' );
+				$label         = isset( $configuration['label'] ) && $configuration['label'] ? $configuration['label'] : __( 'RentalForge', 'abprf-rental-forge' );
 				$this->lib_enqueue();
 				wp_enqueue_editor();
 				wp_enqueue_media();
@@ -59,8 +59,8 @@
 						'post_restored' => __( 'Post Restored successfully!', 'abprf-rental-forge' ),
 						'wc_install' => __( 'Woocommerce Downloading And Installing.........!', 'abprf-rental-forge' ),
 						'wc_installing' => __( 'Woocommerce  Installing.........!', 'abprf-rental-forge' ),
-						'create_post_page' => $label.' '.__( 'Post Page Creating ........!', 'abprf-rental-forge' ),
-						'create_property_page' => $label.' '.__( 'Property Page Creating ........!', 'abprf-rental-forge' ),
+						'create_post_page' => $label . ' ' . __( 'Post Page Creating ........!', 'abprf-rental-forge' ),
+						'create_property_page' => $label . ' ' . __( 'Property Page Creating ........!', 'abprf-rental-forge' ),
 					],
 				] );
 				wp_enqueue_style( 'abprf_admin', ABPRF_URL . '/assets/css/abprf_admin.css', array(), time() );
@@ -194,6 +194,9 @@
 					require_once ABPRF_DIR . '/admin/abprf_configuration.php';
 					require_once ABPRF_DIR . '/admin/abprf_status.php';
 					require_once ABPRF_DIR . '/admin/abprf_category.php';
+					require_once ABPRF_DIR . '/admin/abprf_location.php';
+					require_once ABPRF_DIR . '/admin/abprf_brand.php';
+					require_once ABPRF_DIR . '/admin/abprf_feature.php';
 				}
 				if ( in_array( 'woocommerce/woocommerce.php', get_option( 'active_plugins' ) ) ) {
 					require_once ABPRF_DIR . '/includes/abprf_hooks.php';
@@ -207,11 +210,11 @@
 
 			public function register_cpt(): void {
 				$configuration = ABPRF_Function::get_option( 'abprf_configuration' );
-				$cpt                 = ABPRF_Function::get_cpt();
-				$label               = isset( $configuration['label'] ) && $configuration['label'] ? $configuration['label'] : __( 'RentalForge', 'abprf-rental-forge' );
-				$slug                = isset( $configuration['slug'] ) && $configuration['slug'] ? $configuration['slug'] : 'rental-forge';
-				$icon                = isset( $configuration['icon'] ) && $configuration['icon'] ? $configuration['icon'] : 'dashicons-hammer';
-				$labels              = [
+				$cpt           = ABPRF_Function::get_cpt();
+				$label         = isset( $configuration['label'] ) && $configuration['label'] ? $configuration['label'] : __( 'RentalForge', 'abprf-rental-forge' );
+				$slug          = isset( $configuration['slug'] ) && $configuration['slug'] ? $configuration['slug'] : 'rental-forge';
+				$icon          = isset( $configuration['icon'] ) && $configuration['icon'] ? $configuration['icon'] : 'dashicons-hammer';
+				$labels        = [
 					'name' => esc_html( $label ),
 					'singular_name' => esc_html( $label ),
 					'menu_name' => esc_html( $label ),
@@ -240,7 +243,7 @@
 					'items_list_navigation' => __( 'Category list navigation', 'abprf-rental-forge' ),
 					'filter_items_list' => __( 'Filter Post List', 'abprf-rental-forge' )
 				];
-				$args                = [
+				$args          = [
 					'public' => true,
 					'labels' => $labels,
 					'menu_icon' => esc_html( $icon ),
@@ -257,45 +260,65 @@
 					'has_archive' => true,  // it should have archive page
 				];
 				register_post_type( $cpt, $args );
-				$category_label    = isset( $configuration['category_label'] ) && $configuration['category_label'] ? $configuration['category_label'] : __( 'Category', 'abprf-rental-forge' );
-				$category_slug = isset($configuration['cat_slug']) && $configuration['cat_slug'] ? $configuration['cat_slug'] : 'cat_rent';
-				$full_text = $label . ' ' . $category_label;
+				$category_label = isset( $configuration['category_label'] ) && $configuration['category_label'] ? $configuration['category_label'] : __( 'Category', 'abprf-rental-forge' );
+				$category_slug  = isset( $configuration['cat_slug'] ) && $configuration['cat_slug'] ? $configuration['cat_slug'] : 'cat_rent';
+				$full_text      = $label . ' ' . $category_label;
 				$label_category = array(
 					'name' => $full_text,
 					'singular_name' => $full_text,
-					'menu_name' => $category_label,
-					'all_items' => __('All', 'abprf-rental-forge') . ' ' . $full_text,
-					'parent_item' => __('Parent', 'abprf-rental-forge') . ' ' . $full_text,
-					'parent_item_colon' => __('Parent', 'abprf-rental-forge') . ' ' . $full_text,
-					'new_item_name' => __('New type name of', 'abprf-rental-forge') . ' ' . $label,
-					'add_new_item' => __('Add New', 'abprf-rental-forge') . ' ' . $full_text,
-					'edit_item' => __('Edit', 'abprf-rental-forge') . ' ' . $full_text,
-					'update_item' => __('Update', 'abprf-rental-forge') . ' ' . $full_text,
-					'view_item' => __('View', 'abprf-rental-forge') . ' ' . $full_text,
-					'add_or_remove_items' => __('Add / Remove', 'abprf-rental-forge') . ' ' . $full_text,
-					'popular_items' => __('Popular', 'abprf-rental-forge') . ' ' . $full_text,
-					'search_items' => __('Search', 'abprf-rental-forge') . ' ' . $full_text,
-					'no_terms' => __('No', 'abprf-rental-forge') . ' ' . $full_text,
-					'items_list' => $full_text . ' ' . __('List', 'abprf-rental-forge'),
-					'items_list_navigation' => $full_text . ' ' . __('List navigation', 'abprf-rental-forge'),
-					'separate_items_with_commas' => __('Separated with commas', 'abprf-rental-forge'),
-					'choose_from_most_used' => __('Choose from the most used', 'abprf-rental-forge'),
-					'not_found' => __('Not Found !', 'abprf-rental-forge'),
 				);
-				$args = [
+				$args           = [
 					'hierarchical' => true,
 					"public" => true,
 					'labels' => $label_category,
 					'show_ui' => true,
 					'show_admin_column' => false,
-					'show_in_menu'      => false,
+					'show_in_menu' => false,
 					'query_var' => true,
-					'rewrite' => ['slug' => $category_slug],
+					'rewrite' => [ 'slug' => $category_slug ],
 					'show_in_rest' => true,
 					'rest_base' => 'abprf_category',
 					'meta_box_cb' => false,
 				];
-				register_taxonomy('abprf_category', $cpt, $args);
+				register_taxonomy( 'abprf_category', $cpt, $args );
+				$full_text      = $label . ' ' . __( 'Locations', 'abprf-rental-forge' );
+				$label_location = array(
+					'name' => $full_text,
+					'singular_name' => $full_text,
+				);
+				$args           = [
+					'hierarchical' => true,
+					"public" => true,
+					'labels' => $label_location,
+					'show_ui' => true,
+					'show_admin_column' => false,
+					'show_in_menu' => false,
+					'query_var' => true,
+					'rewrite' => [ 'slug' => 'loc_rent' ],
+					'show_in_rest' => true,
+					'rest_base' => 'abprf_location',
+					'meta_box_cb' => false,
+				];
+				register_taxonomy( 'abprf_location', $cpt, $args );
+				$full_text      = $label . ' ' . __( 'Features', 'abprf-rental-forge' );
+				$label_brand = array(
+					'name' => $full_text,
+					'singular_name' => $full_text,
+				);
+				$args           = [
+					'hierarchical' => true,
+					"public" => true,
+					'labels' => $label_brand,
+					'show_ui' => true,
+					'show_admin_column' => false,
+					'show_in_menu' => false,
+					'query_var' => true,
+					'rewrite' => [ 'slug' => 'fec_rent' ],
+					'show_in_rest' => true,
+					'rest_base' => 'abprf_feature',
+					'meta_box_cb' => false,
+				];
+				register_taxonomy( 'abprf_brand', $cpt, $args );
 				flush_rewrite_rules();
 			}
 
@@ -310,11 +333,11 @@
 
 			public static function create_table() {
 				global $wpdb;
-				$order_table         = $wpdb->prefix . 'abprf_orders';
-				$order_table_old     = $wpdb->prefix . 'abprf_orders_old';
-				$property_table      = $wpdb->prefix . 'abprf_property';
-				$collate             = $wpdb->has_cap( 'collation' ) ? $wpdb->get_charset_collate() : '';
-				$abprf_orders        = "CREATE TABLE IF NOT EXISTS $order_table (
+				$order_table      = $wpdb->prefix . 'abprf_orders';
+				$order_table_old  = $wpdb->prefix . 'abprf_orders_old';
+				$property_table   = $wpdb->prefix . 'abprf_property';
+				$collate          = $wpdb->has_cap( 'collation' ) ? $wpdb->get_charset_collate() : '';
+				$abprf_orders     = "CREATE TABLE IF NOT EXISTS $order_table (
 																	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 																	order_id BIGINT UNSIGNED NOT NULL ,
 																	item_id BIGINT UNSIGNED NOT NULL,
@@ -328,7 +351,9 @@
 									                                end_time TIMESTAMP NULL,
      																book_from TIMESTAMP  NULL,							    
 																    book_to TIMESTAMP NULL,
-    																category varchar(20) NOT NULL,
+    																category varchar(20)  NULL,
+    																location varchar(20)  NULL,
+    																brand varchar(20)  NULL,
     																price_info JSON NOT NULL,
 																    property_info JSON NOT NULL,
 																    ex_info JSON NOT NULL,
@@ -349,7 +374,7 @@
 																    KEY user_id (user_id),
 									                                KEY item_id (item_id)
 							    )$collate;";
-				$abprf_orders_old    = "CREATE TABLE IF NOT EXISTS $order_table_old (
+				$abprf_orders_old = "CREATE TABLE IF NOT EXISTS $order_table_old (
 																	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 																	order_id BIGINT UNSIGNED NOT NULL ,
 																	item_id BIGINT UNSIGNED NOT NULL,
@@ -363,7 +388,9 @@
 									                                end_time TIMESTAMP NULL,
      																book_from TIMESTAMP  NULL,							    
 																    book_to TIMESTAMP NULL,
-    																category varchar(20) NOT NULL,
+    																category varchar(20)  NULL,
+    																location varchar(20)  NULL,
+    																brand varchar(20)  NULL,
     																price_info JSON NOT NULL,
 																    property_info JSON NOT NULL,
 																    ex_info JSON NOT NULL,
@@ -384,21 +411,19 @@
 																    KEY user_id (user_id),
 									                                KEY item_id (item_id)
 							    )$collate;";
-				$abprf_property      = "CREATE TABLE IF NOT EXISTS $property_table (
+				$abprf_property   = "CREATE TABLE IF NOT EXISTS $property_table (
 												             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 												             post_id BIGINT UNSIGNED NOT NULL,
 												             rent_continue varchar(20) NOT NULL DEFAULT 'on',
-    														name varchar(100) NOT NULL,
-												             icon varchar(50) NULL,
-    														qty_info JSON NOT NULL,
-												             brand varchar(100) NULL,
- 															category varchar(20) NOT NULL,
-												             description varchar(200) NULL,  
-												             price_rule varchar(100) NULL,  
-    														price_info JSON NOT NULL,											             
-												             features JSON NULL,
+    														name varchar(100) NOT NULL,    														
+												             brand varchar(20) NULL,
+ 															category varchar(200) NULL,
+ 															location varchar(200) NULL,
+ 															features varchar(200) NULL,
+												             rent_rule varchar(20) NULL,  
+    														price_qty_info JSON NOT NULL,		
 												             gallery varchar(100) NULL,
-												             status varchar(50) NULL,												                                     
+												             status varchar(20) NULL,												                                     
 												             others JSON NULL,
 												             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 												             updated_at TIMESTAMP NULL,

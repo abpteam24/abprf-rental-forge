@@ -4,18 +4,16 @@
 	}
 	add_action( 'abprf_property_item_template', function ( $abprf_infos, $property = [] ) {
 		if ( is_array( $property ) && sizeof( $property ) > 0 ) {
-			$rent_rule      = array_key_exists( 'rent_rule', $abprf_infos ) ? $abprf_infos['rent_rule'] : 'hourly';
 			$date_time_info = array_key_exists( 'date_info', $abprf_infos ) ? $abprf_infos['date_info'] : [];
 			$dif            = array_key_exists( 'dif', $date_time_info ) ? $date_time_info['dif'] : 0;
 			$dif_text       = array_key_exists( 'dif_text', $date_time_info ) ? $date_time_info['dif_text'] : '';
 			$dif_exit       = 0;
 			$post_id        = array_key_exists( 'post_id', $property ) ? $property['post_id'] : '';
 			$property_id    = array_key_exists( 'id', $property ) ? $property['id'] : '';
-			$price_rule     = array_key_exists( 'price_rule', $property ) ? $property['price_rule'] : '';
-			$price_rule     = $price_rule ? explode( ',', $price_rule ) : [];
+			$rent_rule    = array_key_exists( 'rent_rule', $property ) ? $property['rent_rule'] : '';
 			$price_info     = array_key_exists( 'price_info', $property ) ? $property['price_info'] : '';
 			$price_info     = ! empty( $price_info ) ? json_decode( $price_info, true ) : [];
-			if ( sizeof( $price_rule ) > 0 ) {
+			if ( !empty($rent_rule) ) {
 				$icon_image         = array_key_exists( 'icon', $property ) ? $property['icon'] : '';
 				$name               = array_key_exists( 'name', $property ) ? $property['name'] : '';
 				$brand              = array_key_exists( 'brand', $property ) ? $property['brand'] : '';
@@ -53,7 +51,7 @@
 								$deposit_type   = is_array( $deposit_info ) && array_key_exists( 'type', $deposit_info ) ? $deposit_info['type'] : '';
 								$deposit_value  = is_array( $deposit_info ) && array_key_exists( 'value', $deposit_info ) ? $deposit_info['value'] : '';
 								$active_deposit = $deposit_type && $deposit_value ? 'on' : 'off';
-								$hourly_info    = in_array( 'hourly', $price_rule ) && array_key_exists( 'hourly', $price_info ) ? $price_info['hourly'] : [];
+								$hourly_info    =  array_key_exists( 'hourly', $price_info ) ? $price_info['hourly'] : [];
 								$price_hourly   = is_array( $hourly_info ) && array_key_exists( 'price', $hourly_info ) ? $hourly_info['price'] : '';
 								if ( $rent_rule == 'hourly' && ! empty( $price_hourly ) ) {
 									$min_hour = array_key_exists( 'min', $hourly_info ) ? $hourly_info['min'] : 1;
@@ -81,7 +79,7 @@
                                     </div>
 								<?php } ?>
 							<?php
-								$daily_info  = in_array( 'daily', $price_rule ) && array_key_exists( 'daily', $price_info ) ? $price_info['daily'] : [];
+								$daily_info  = array_key_exists( 'daily', $price_info ) ? $price_info['daily'] : [];
 								$price_daily = is_array( $daily_info ) && array_key_exists( 'price', $daily_info ) ? $daily_info['price'] : '';
 								if ( $rent_rule == 'daily' && ! empty( $price_daily ) ) {
 									$min_day = is_array( $daily_info ) && array_key_exists( 'min', $daily_info ) ? $daily_info['min'] : 1;
@@ -98,7 +96,7 @@
                                     </div>
 								<?php } ?>
 							<?php
-								$monthly_info  = in_array( 'monthly', $price_rule ) && array_key_exists( 'monthly', $price_info ) ? $price_info['monthly'] : [];
+								$monthly_info  = array_key_exists( 'monthly', $price_info ) ? $price_info['monthly'] : [];
 								$price_monthly = is_array( $monthly_info ) && array_key_exists( 'price', $monthly_info ) ? $monthly_info['price'] : '';
 								if ( $rent_rule == 'monthly' && ! empty( $price_monthly ) ) {
 									$min_month = is_array( $monthly_info ) && array_key_exists( 'min', $monthly_info ) ? $monthly_info['min'] : 1;

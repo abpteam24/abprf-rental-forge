@@ -5,7 +5,7 @@
 	if ( ! class_exists( 'ABPRF_Shortcodes' ) ) {
 		class ABPRF_Shortcodes {
 			public function __construct() {
-				add_shortcode( 'abprf-list', array( $this, 'list' ) );
+				add_shortcode( 'abprf-post', array( $this, 'list' ) );
 				add_shortcode( 'abprf-equipment', array( $this, 'abptm_search' ) );
 			}
 

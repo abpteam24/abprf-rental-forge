@@ -8,6 +8,7 @@
 	div.abprf_admin .group_setting [class*="_setting_item"] {min-width: 400px;-webkit-flex: 1;flex: 1;}
 	div.abprf_admin label .info_text {width: 100%;margin: var(--rf_gap_xxs) 0 0 0;font-size: 11px;}
 	div.abprf_admin [class*="_form_control"] {max-width: 250px;min-width: 250px;}
+	div.abprf_admin [class*="_form_control"][class*="_w_full"] {max-width: 100%;min-width: 100%;}
 	div.abprf_admin textarea[class*="_form_control"] {max-width: 100%;}
 	div.abprf_admin input[class*="_form_control"][type="time"] {max-width: 125px;text-align: center;min-width: 125px;}
 	div.abprf_admin [class*="_form_control"].abprf_color_picker {min-width: 150px; height: 40px;padding: var(--rf_gap_xxs) var(--rf_gap_xs);}

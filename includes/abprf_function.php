@@ -115,6 +115,123 @@
 				return $infos;
 			}
 
+			public static function get_brand_icon() { return self::get_options( 'abprf_configuration', 'brand_icon', 'fas fa-hammer' ); }
+
+			public static function get_cpt(): string { return 'abprf_post'; }
+
+			public static function get_image_url( $post_id = '', $image_id = '', $size = 'full' ): bool|string {
+				$image_id = $post_id && $post_id > 0 ? get_post_thumbnail_id( $post_id ) : $image_id;
+
+				return wp_get_attachment_image_url( $image_id, $size );
+			}
+
+			public static function get_page_by_slug( $slug ): bool|WP_Post {
+				if ( $pages = get_pages() ) {
+					foreach ( $pages as $page ) {
+						if ( $slug === $page->post_name ) {
+							return $page;
+						}
+					}
+				}
+
+				return false;
+			}
+
+			public static function get_id_by_slug( $page_slug ): ?int {
+				$page = get_page_by_path( $page_slug );
+
+				return $page?->ID;
+			}
+
+			public static function check_wc(): int {
+				include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+				$plugin_dir = ABSPATH . 'wp-content/plugins/woocommerce';
+				if ( in_array( 'woocommerce/woocommerce.php', get_option( 'active_plugins' ) ) ) {
+					return 2;
+				} elseif ( is_dir( $plugin_dir ) ) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+
+			public static function already_in_cart( $post_id, $bp, $dp, $bp_date, $seat_name ) {
+				$count = 0;
+				if ( is_admin() && str_contains( wp_get_referer(), 'add_order' ) ) {
+					return $count;
+				}
+				global $woocommerce;
+				$cart_items = $woocommerce->cart->get_cart();
+				if ( is_array( $cart_items ) && sizeof( $cart_items ) > 0 ) {
+					foreach ( $cart_items as $cart_item ) {
+						$cart_post_id = array_key_exists( 'post_id', $cart_item ) ? $cart_item['post_id'] : '';
+						$cart_date    = array_key_exists( 'bp_time', $cart_item ) ? $cart_item['bp_time'] : '';
+						$cart_date    = $cart_date ? gmdate( 'Y-m-d', strtotime( $cart_date ) ) : '';
+						$bp_date      = $bp_date ? gmdate( 'Y-m-d', strtotime( $bp_date ) ) : '';
+						if ( $cart_post_id == $post_id && strtotime( $cart_date ) == strtotime( $bp_date ) ) {
+							$routes = self::get_post_info( $post_id, 'route_direction', [] );
+							if ( sizeof( $routes ) > 0 ) {
+								$cart_bp = array_key_exists( 'bp', $cart_item ) ? $cart_item['bp'] : '';
+								$cart_dp = array_key_exists( 'dp', $cart_item ) ? $cart_item['dp'] : '';
+								$sp      = array_search( $bp, $routes );
+								$ep      = array_search( $dp, $routes );
+								if ( in_array( $cart_bp, array_slice( $routes, 0, $ep ) ) && in_array( $cart_dp, array_slice( $routes, $sp + 1 ) ) ) {
+									$seat_infos = array_key_exists( 'ticket_info', $cart_item ) ? $cart_item['ticket_info'] : '';
+									if ( sizeof( $seat_infos ) > 0 ) {
+										foreach ( $seat_infos as $seat_info ) {
+											if ( array_key_exists( 'seat', $seat_info ) && strtolower( $seat_info['seat'] ) == strtolower( $seat_name ) ) {
+												$count += array_key_exists( 'qty', $cart_item ) ? $cart_item['qty'] : 1;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				return $count;
+			}
+
+			public static function get_user_role( $user_ID ): string {
+				global $wp_roles;
+				$user_role_list = '';
+				$user_data      = get_userdata( $user_ID );
+				$user_role_slug = $user_data->roles;
+				if ( is_array( $user_role_slug ) && sizeof( $user_role_slug ) > 0 ) {
+					$user_count = 0;
+					foreach ( $user_role_slug as $user_role ) {
+						$user_count ++;
+						if ( $user_count > 1 ) {
+							$user_role_list .= ", ";
+						}
+						$user_role_list .= translate_user_role( $wp_roles->roles[ $user_role ]['name'] );
+					}
+				}
+
+				return $user_role_list;
+			}
+
+			//=========== Template Related==================//
+			public static function details_template_path( $post_id ): string {
+				$post_id       = $post_id ?? get_the_id();
+				$template_name = self::get_post_info( $post_id, 'abprf_template', 'default' );
+				$file_name     = 'details_theme/' . $template_name . '.php';
+				$dir           = ABPRF_DIR . '/rf_templates/' . $file_name;
+				if ( ! file_exists( $dir ) ) {
+					$file_name = 'themes/default.php';
+				}
+
+				return self::template_path( $file_name );
+			}
+
+			public static function template_path( $file_name ): string {
+				$file_path   = wp_normalize_path( WP_CONTENT_DIR . DIRECTORY_SEPARATOR . '/rf_templates/' . $file_name );
+				$default_dir = wp_normalize_path( ABPRF_DIR . '/rf_templates/' . $file_name );
+
+				return file_exists( $file_path ) ? $file_path : $default_dir;
+			}
+
 			//============= Date function================//
 			public static function get_all_date_time_info( $rent_rule, $post_id = '' ) {
 				$all_info = [];
@@ -578,20 +695,7 @@
 				return false;
 			}
 
-			//=============================//
-			public static function price_convert_raw( $price ) {
-				$price = wp_strip_all_tags( $price );
-				$price = str_replace( self::get_option( 'woocommerce_price_display_suffix', '' ), '', $price );
-				$price = str_replace( get_woocommerce_currency_symbol(), '', $price );
-				$price = str_replace( wc_get_price_thousand_separator(), 't_s', $price );
-				$price = str_replace( wc_get_price_decimal_separator(), 'd_s', $price );
-				$price = str_replace( 't_s', '', $price );
-				$price = str_replace( 'd_s', '.', $price );
-				$price = str_replace( '&nbsp;', '', $price );
-
-				return max( $price, 0 );
-			}
-
+			//=============Price Function================//
 			public static function tax_with_price( $post_id, $price ): string {
 				$num_of_decimal = get_option( 'woocommerce_price_num_decimals', 2 );
 				$_product       = self::get_post_info( $post_id, 'link_wc_id', $post_id );
@@ -618,128 +722,102 @@
 				return apply_filters( 'woocommerce_get_price_to_display', $return_price, 1, $product );
 			}
 
-			//=============================//
-			public static function get_brand_icon() { return self::get_options( 'abprf_configuration', 'brand_icon', 'fas fa-hammer' ); }
-
-			public static function get_cpt(): string { return 'abprf_post'; }
-
-			public static function get_image_url( $post_id = '', $image_id = '', $size = 'full' ): bool|string {
-				$image_id = $post_id && $post_id > 0 ? get_post_thumbnail_id( $post_id ) : $image_id;
-
-				return wp_get_attachment_image_url( $image_id, $size );
-			}
-
-			public static function get_page_by_slug( $slug ): bool|WP_Post {
-				if ( $pages = get_pages() ) {
-					foreach ( $pages as $page ) {
-						if ( $slug === $page->post_name ) {
-							return $page;
+			public static function get_price( $abprf_infos = [] ) {
+				$post_id = $price = 0;
+				if ( is_array( $abprf_infos ) && sizeof( $abprf_infos ) > 0 ) {
+					$start_time        = array_key_exists( 'start_time', $abprf_infos ) ? $abprf_infos['start_time'] : '';
+					$end_time          = array_key_exists( 'end_time', $abprf_infos ) ? $abprf_infos['end_time'] : '';
+					$rent_rule         = array_key_exists( 'rent_rule', $abprf_infos ) ? $abprf_infos['rent_rule'] : '';
+					$date_length_infos = array_key_exists( 'date_length_infos', $abprf_infos ) ? $abprf_infos['date_length_infos'] : [];
+					$post_id           = array_key_exists( 'post_id', $abprf_infos ) ? $abprf_infos['post_id'] : 0;
+					$qty               = array_key_exists( 'qty', $abprf_infos ) ? $abprf_infos['qty'] : 0;
+					$property_id       = array_key_exists( 'property_id', $abprf_infos ) ? $abprf_infos['property_id'] : 0;
+					$property          = array_key_exists( 'property_info', $abprf_infos ) ? $abprf_infos['property_info'] : [];
+					$property          = is_array( $property ) && sizeof( $property ) > 0 ? $property : current( ABPRF_Query::get_property( [ 'property_id' => $property_id ] ) );
+					$price_info = array_key_exists( 'price_info', $property ) ? $property['price_info'] : '';
+					$price_info = ! empty( $price_info ) ? json_decode( $price_info, true ) : [];
+					if ( ! empty( $start_time ) && ! empty( $end_time )  && ! empty( $rent_rule ) && ! empty( $property ) ) {
+						if ( $rent_rule == 'hourly' ) {
+							$hourly_info                  =  array_key_exists( 'hourly', $price_info ) ? $price_info['hourly'] : [];
+							$price_hourly                 = is_array( $hourly_info ) && array_key_exists( 'price', $hourly_info ) ? $hourly_info['price'] : 0;
+							$date_length_infos            = ! empty( $date_length_infos ) ? $date_length_infos : ABPRF_Function::get_date_time_difference( $start_time, $end_time );
+							$hour_dif                     = array_key_exists( 'hour', $date_length_infos ) ? $date_length_infos['hour'] : 0;
+							$min_dif                      = array_key_exists( 'min', $date_length_infos ) ? $date_length_infos['min'] : 0;
+							$dif                          = $min_dif > 0 ? $hour_dif + 1 : $hour_dif;
+							$dif                          = max( 1, $dif );
+							$abprf_infos['duration']      = $dif;
+							$abprf_infos['property_info'] = $property;
+							$price                        = $price_hourly * $dif * $qty;
+							$price                        = apply_filters( 'abprf_filter_property_price', $price, $abprf_infos );
+							$price                        = ABPRF_Function::tax_with_price( $post_id, $price );
 						}
 					}
 				}
 
-				return false;
+				return $price > 0 ? self::tax_with_price( $post_id, $price ) : 0;
 			}
 
-			public static function get_id_by_slug( $page_slug ): ?int {
-				$page = get_page_by_path( $page_slug );
+			public static function get_min_price( $post_id ) {
+				$price = 0;
+				if ( ! empty( $post_id ) && $post_id > 0 ) {
+					$rent_rule  = self::get_post_info( $post_id, 'rent_rule' );
+					$properties = ABPRF_Query::get_property( [ 'post_id' => $post_id, 'rent_continue' => 'on', 'rent_rule' => $rent_rule, 'status' => 'publish' ] );
+				}
 
-				return $page?->ID;
+				return $price > 0 ? self::tax_with_price( $post_id, $price ) : 0;
 			}
 
-			public static function check_wc(): int {
-				include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-				$plugin_dir = ABSPATH . 'wp-content/plugins/woocommerce';
-				if ( in_array( 'woocommerce/woocommerce.php', get_option( 'active_plugins' ) ) ) {
-					return 2;
-				} elseif ( is_dir( $plugin_dir ) ) {
-					return 1;
+			public static function get_deposit_price( $abprf_infos = [] ) {
+				$price = 0;
+				if ( is_array( $abprf_infos ) && sizeof( $abprf_infos ) > 0 ) {
+					$property_id    = array_key_exists( 'property_id', $abprf_infos ) ? $abprf_infos['property_id'] : 0;
+					$qty            = array_key_exists( 'qty', $abprf_infos ) ? $abprf_infos['qty'] : 0;
+					$property       = array_key_exists( 'property_info', $abprf_infos ) ? $abprf_infos['property_info'] : [];
+					$property       = is_array( $property ) && sizeof( $property ) > 0 ? $property : current( ABPRF_Query::get_property( [ 'property_id' => $property_id ] ) );
+					$price_info     = array_key_exists( 'price_info', $property ) ? $property['price_info'] : '';
+					$price_info     = ! empty( $price_info ) ? json_decode( $price_info, true ) : [];
+					$deposit_info   = array_key_exists( 'deposit', $price_info ) ? $price_info['deposit'] : [];
+					$deposit_type   = is_array( $deposit_info ) && array_key_exists( 'type', $deposit_info ) ? $deposit_info['type'] : '';
+					$deposit_value  = is_array( $deposit_info ) && array_key_exists( 'value', $deposit_info ) ? $deposit_info['value'] : '';
+					$active_deposit = $deposit_type && $deposit_value ? 'on' : 'off';
+					if ( $active_deposit == 'on' && $qty > 0 && ! empty( $property ) ) {
+						if ( $deposit_type == 'fixed' ) {
+							$price = $deposit_value;
+						} elseif ( $deposit_type == 'percent' ) {
+							$price = array_key_exists( 'price', $abprf_infos ) ? $abprf_infos['price'] : 0;
+							$price = $price * $deposit_value / 100;
+						} else {
+							$price = $qty * $deposit_value;
+						}
+					}
+				}
+
+				return $price;
+			}
+
+			public static function get_additional_price( $post_id, $service_name, $abprf_infos = [] ): int|string {
+				$display                  = array_key_exists( 'display_additional_services', $abprf_infos ) ? $abprf_infos['display_additional_services'] : ABPRF_Function::get_post_info( $post_id, 'display_additional_services', 'on' );
+				$active_global_additional = array_key_exists( 'active_global_additional', $abprf_infos ) ? $abprf_infos['active_global_additional'] : ABPRF_Function::get_post_info( $post_id, 'active_global_additional', 'on' );
+				if ( $active_global_additional == 'on' ) {
+					$services = ABPRF_Function::get_option( 'abprf_additional' );
 				} else {
-					return 0;
+					$services = array_key_exists( 'abprf_additional', $abprf_infos ) ? $abprf_infos['abprf_additional'] : ABPRF_Function::get_post_info( $post_id, 'abprf_additional', [] );
 				}
-			}
-
-			public static function already_in_cart( $post_id, $bp, $dp, $bp_date, $seat_name ) {
-				$count = 0;
-				if ( is_admin() && str_contains( wp_get_referer(), 'add_order' ) ) {
-					return $count;
-				}
-				global $woocommerce;
-				$cart_items = $woocommerce->cart->get_cart();
-				if ( is_array( $cart_items ) && sizeof( $cart_items ) > 0 ) {
-					foreach ( $cart_items as $cart_item ) {
-						$cart_post_id = array_key_exists( 'post_id', $cart_item ) ? $cart_item['post_id'] : '';
-						$cart_date    = array_key_exists( 'bp_time', $cart_item ) ? $cart_item['bp_time'] : '';
-						$cart_date    = $cart_date ? gmdate( 'Y-m-d', strtotime( $cart_date ) ) : '';
-						$bp_date      = $bp_date ? gmdate( 'Y-m-d', strtotime( $bp_date ) ) : '';
-						if ( $cart_post_id == $post_id && strtotime( $cart_date ) == strtotime( $bp_date ) ) {
-							$routes = self::get_post_info( $post_id, 'route_direction', [] );
-							if ( sizeof( $routes ) > 0 ) {
-								$cart_bp = array_key_exists( 'bp', $cart_item ) ? $cart_item['bp'] : '';
-								$cart_dp = array_key_exists( 'dp', $cart_item ) ? $cart_item['dp'] : '';
-								$sp      = array_search( $bp, $routes );
-								$ep      = array_search( $dp, $routes );
-								if ( in_array( $cart_bp, array_slice( $routes, 0, $ep ) ) && in_array( $cart_dp, array_slice( $routes, $sp + 1 ) ) ) {
-									$seat_infos = array_key_exists( 'ticket_info', $cart_item ) ? $cart_item['ticket_info'] : '';
-									if ( sizeof( $seat_infos ) > 0 ) {
-										foreach ( $seat_infos as $seat_info ) {
-											if ( array_key_exists( 'seat', $seat_info ) && strtolower( $seat_info['seat'] ) == strtolower( $seat_name ) ) {
-												$count += array_key_exists( 'qty', $cart_item ) ? $cart_item['qty'] : 1;
-											}
-										}
-									}
-								}
-							}
+				$price = 0;
+				if ( $display == 'on' && sizeof( $services ) > 0 ) {
+					foreach ( $services as $service ) {
+						$ex_name = array_key_exists( 'name', $service ) ? $service['name'] : '';
+						if ( $ex_name == $service_name ) {
+							$price = array_key_exists( 'price', $service ) ? $service['price'] : 0;
 						}
 					}
 				}
 
-				return $count;
+				return $price > 0 ? self::tax_with_price( $post_id, $price ) : 0;
 			}
 
-			public static function get_user_role( $user_ID ): string {
-				global $wp_roles;
-				$user_role_list = '';
-				$user_data      = get_userdata( $user_ID );
-				$user_role_slug = $user_data->roles;
-				if ( is_array( $user_role_slug ) && sizeof( $user_role_slug ) > 0 ) {
-					$user_count = 0;
-					foreach ( $user_role_slug as $user_role ) {
-						$user_count ++;
-						if ( $user_count > 1 ) {
-							$user_role_list .= ", ";
-						}
-						$user_role_list .= translate_user_role( $wp_roles->roles[ $user_role ]['name'] );
-					}
-				}
-
-				return $user_role_list;
-			}
-
-			//=========== Template Related==================//
-			public static function details_template_path( $post_id ): string {
-				$post_id       = $post_id ?? get_the_id();
-				$template_name = self::get_post_info( $post_id, 'abprf_template', 'default' );
-				$file_name     = 'details_theme/' . $template_name . '.php';
-				$dir           = ABPRF_DIR . '/rf_templates/' . $file_name;
-				if ( ! file_exists( $dir ) ) {
-					$file_name = 'themes/default.php';
-				}
-
-				return self::template_path( $file_name );
-			}
-
-			public static function template_path( $file_name ): string {
-				$file_path   = wp_normalize_path( WP_CONTENT_DIR . DIRECTORY_SEPARATOR . '/rf_templates/' . $file_name );
-				$default_dir = wp_normalize_path( ABPRF_DIR . '/rf_templates/' . $file_name );
-
-				return file_exists( $file_path ) ? $file_path : $default_dir;
-			}
-
+			//=============================//
 			//============== Post Function===============//
-
-
-
 			public static function get_route_info( $post_id, $date, $route_infos = [] ): array {
 				$all_infos   = [];
 				$now         = current_time( 'Y-m-d H:i' );
@@ -812,95 +890,8 @@
 				return $date;
 			}
 
-			public static function get_price( $abprf_infos = [] ) {
-				$post_id = $price = 0;
-				if ( is_array( $abprf_infos ) && sizeof( $abprf_infos ) > 0 ) {
-					$start_time        = array_key_exists( 'start_time', $abprf_infos ) ? $abprf_infos['start_time'] : '';
-					$end_time          = array_key_exists( 'end_time', $abprf_infos ) ? $abprf_infos['end_time'] : '';
-					$rent_rule         = array_key_exists( 'rent_rule', $abprf_infos ) ? $abprf_infos['rent_rule'] : '';
-					$date_length_infos = array_key_exists( 'date_length_infos', $abprf_infos ) ? $abprf_infos['date_length_infos'] : [];
-					$post_id           = array_key_exists( 'post_id', $abprf_infos ) ? $abprf_infos['post_id'] : 0;
-					$qty               = array_key_exists( 'qty', $abprf_infos ) ? $abprf_infos['qty'] : 0;
-					$property_id       = array_key_exists( 'property_id', $abprf_infos ) ? $abprf_infos['property_id'] : 0;
-					$property          = array_key_exists( 'property_info', $abprf_infos ) ? $abprf_infos['property_info'] : [];
-					$property          = is_array( $property ) && sizeof( $property ) > 0 ? $property : current( ABPRF_Query::get_property( [ 'property_id' => $property_id ] ) );
-					$price_rule        = array_key_exists( 'price_rule', $property ) ? $property['price_rule'] : '';
-					$price_rule        = $price_rule ? explode( ',', $price_rule ) : [];
-					$price_info        = array_key_exists( 'price_info', $property ) ? $property['price_info'] : '';
-					$price_info        = ! empty( $price_info ) ? json_decode( $price_info, true ) : [];
-					if ( ! empty( $start_time ) && ! empty( $end_time ) && ! empty( $price_rule ) && ! empty( $rent_rule ) && ! empty( $property ) ) {
-						if ( $rent_rule == 'hourly' ) {
-							$hourly_info                  = in_array( 'hourly', $price_rule ) && array_key_exists( 'hourly', $price_info ) ? $price_info['hourly'] : [];
-							$price_hourly                 = is_array( $hourly_info ) && array_key_exists( 'price', $hourly_info ) ? $hourly_info['price'] : 0;
-							$date_length_infos            = ! empty( $date_length_infos ) ? $date_length_infos : ABPRF_Function::get_date_time_difference( $start_time, $end_time );
-							$hour_dif                     = array_key_exists( 'hour', $date_length_infos ) ? $date_length_infos['hour'] : 0;
-							$min_dif                      = array_key_exists( 'min', $date_length_infos ) ? $date_length_infos['min'] : 0;
-							$dif                          = $min_dif > 0 ? $hour_dif + 1 : $hour_dif;
-							$dif                          = max( 1, $dif );
-							$abprf_infos['duration']      = $dif;
-							$abprf_infos['property_info'] = $property;
-							$price                        = $price_hourly * $dif * $qty;
-							$price                        = apply_filters( 'abprf_filter_property_price', $price, $abprf_infos );
-							$price                        = ABPRF_Function::tax_with_price( $post_id, $price );
-						}
-					}
-				}
-
-				return $price > 0 ? self::tax_with_price( $post_id, $price ) : 0;
-			}
-
-			public static function get_deposit_price( $abprf_infos = [] ) {
-				$price = 0;
-				if ( is_array( $abprf_infos ) && sizeof( $abprf_infos ) > 0 ) {
-					$property_id    = array_key_exists( 'property_id', $abprf_infos ) ? $abprf_infos['property_id'] : 0;
-					$qty            = array_key_exists( 'qty', $abprf_infos ) ? $abprf_infos['qty'] : 0;
-					$property       = array_key_exists( 'property_info', $abprf_infos ) ? $abprf_infos['property_info'] : [];
-					$property       = is_array( $property ) && sizeof( $property ) > 0 ? $property : current( ABPRF_Query::get_property( [ 'property_id' => $property_id ] ) );
-					$price_info     = array_key_exists( 'price_info', $property ) ? $property['price_info'] : '';
-					$price_info     = ! empty( $price_info ) ? json_decode( $price_info, true ) : [];
-					$deposit_info   = array_key_exists( 'deposit', $price_info ) ? $price_info['deposit'] : [];
-					$deposit_type   = is_array( $deposit_info ) && array_key_exists( 'type', $deposit_info ) ? $deposit_info['type'] : '';
-					$deposit_value  = is_array( $deposit_info ) && array_key_exists( 'value', $deposit_info ) ? $deposit_info['value'] : '';
-					$active_deposit = $deposit_type && $deposit_value ? 'on' : 'off';
-					if ( $active_deposit == 'on' && $qty > 0 && ! empty( $property ) ) {
-						if ( $deposit_type == 'fixed' ) {
-							$price = $deposit_value;
-						} elseif ( $deposit_type == 'percent' ) {
-							$price = array_key_exists( 'price', $abprf_infos ) ? $abprf_infos['price'] : 0;
-							$price = $price * $deposit_value / 100;
-						} else {
-							$price = $qty * $deposit_value;
-						}
-					}
-				}
-
-				return $price;
-			}
-
-			public static function get_additional_price( $post_id, $service_name, $abprf_infos = [] ) {
-				$display                  = array_key_exists( 'display_additional_services', $abprf_infos ) ? $abprf_infos['display_additional_services'] : ABPRF_Function::get_post_info( $post_id, 'display_additional_services', 'on' );
-				$active_global_additional = array_key_exists( 'active_global_additional', $abprf_infos ) ? $abprf_infos['active_global_additional'] : ABPRF_Function::get_post_info( $post_id, 'active_global_additional', 'on' );
-				if ( $active_global_additional == 'on' ) {
-					$services = ABPRF_Function::get_option( 'abprf_additional' );
-				} else {
-					$services = array_key_exists( 'abprf_additional', $abprf_infos ) ? $abprf_infos['abprf_additional'] : ABPRF_Function::get_post_info( $post_id, 'abprf_additional', [] );
-				}
-				$price = 0;
-				if ( $display == 'on' && sizeof( $services ) > 0 ) {
-					foreach ( $services as $service ) {
-						$ex_name = array_key_exists( 'name', $service ) ? $service['name'] : '';
-						if ( $ex_name == $service_name ) {
-							$price = array_key_exists( 'price', $service ) ? $service['price'] : 0;
-						}
-					}
-				}
-
-				return $price > 0 ? self::tax_with_price( $post_id, $price ) : 0;
-			}
-
-			//============== ===============//
 			public static function get_transport_list_details( $bp, $dp, $bp_date ): array {
-				$list_infos    = [];
+				$list_infos = [];
 				//$equipment_ids = ABPRF_Query::get_equipment_id( $bp, $dp );
 				$equipment_ids = [];
 				if ( sizeof( $equipment_ids ) > 0 ) {

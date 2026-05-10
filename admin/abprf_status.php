@@ -210,7 +210,7 @@
 							'post_type' => 'page',
 							'post_name' => 'rf_post_list',
 							'post_title' => $label.' '.__( 'List', 'abprf-rental-forge' ),
-							'post_content' => '[abprf-list]',
+							'post_content' => '[abprf-post]',
 							'post_status' => 'publish',
 						);
 						wp_insert_post( $page );

@@ -170,14 +170,10 @@ function abprf_input_value_change(currentTarget) {
 }
 (function ($) {
     "use strict";
-    $(document).on('click', '.abprf_load_more [data-read]', function (e) {
+    $(document).on('click', 'div.abprf_area .load_more [data-read]', function (e) {
         e.stopPropagation();
-        let parent = $(this).closest('.abprf_load_more');
-        let open_text = parent.find('[data-read-open]').html();
-        let close_text = parent.find('[data-read-close]').html();
-        parent.find('[data-read-close]').html(open_text);
-        parent.find('[data-read-open]').html(close_text);
-        abprf_text_change($(this));
+        let parent = $(this).closest('.load_more');
+        parent.find('[data-content]').toggleClass('_d_none')
     });
     $(document).on('click', '.abprf_area [data-all-change]', function () {
         abprf_data_change($(this));
@@ -348,7 +344,7 @@ function abprf_popup_close() {
             target.slideDown(250);
         } else {
             target.each(function () {
-                $(this).stop(true, true).slideToggle(250, function() {
+                $(this).stop(true, true).slideToggle(250, function () {
                     $(this).toggleClass('rf_active');
                 });
             });

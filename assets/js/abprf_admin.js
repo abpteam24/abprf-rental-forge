@@ -413,8 +413,8 @@
                 if ($('body').find('div.abprf_admin .category_list').length > 0) {
                     $('body').find('div.abprf_admin .category_list').html(response.data.html);
                 }
-                if ($('body').find('div.abprf_admin .category_list').length > 0) {
-                    $('body').find('div.abprf_admin .category_list').html(response.data.html);
+                if ($('body').find('div.abprf_admin .category_selection').length > 0) {
+                    $('body').find('div.abprf_admin .category_selection').html(response.data.html);
                 }
                 abprf_popup_close();
             }
@@ -460,6 +460,208 @@
                 });
             }
         })
+    });
+    //==========Location configuration=================//
+    $(document).on('submit', 'div.abprf_admin form.save_location', function (e) {
+        e.preventDefault();
+        let target = $(this);
+        let formData = new FormData(this);
+        formData.append('action', 'abprf_save_location');
+        formData.append('nonce', abprf_admin_data.nonce);
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
+            beforeSend: function () {
+                abprf_spinner(target);
+                abprf_toast_msg(abprf_admin_data.msg.saving);
+            },
+            success: function (response) {
+                abprf_spinner_remove(target);
+                abprf_toast_msg(response.data.msg, 'success');
+                if ($('body').find('div.abprf_admin .location_list').length > 0) {
+                    $('body').find('div.abprf_admin .location_list').html(response.data.html);
+                }
+                if ($('body').find('div.abprf_admin .loc_selection').length > 0) {
+                    $('body').find('div.abprf_admin .loc_selection').html(response.data.html);
+                }
+                abprf_popup_close();
+            }
+        });
+    });
+    $(document).on('click', 'div.abprf_admin button.abprf_loc_delete', function (e) {
+        e.preventDefault();
+        let parent = $(this).closest('.location_list');
+        let loc_id = parseInt($(this).attr('data-loc_id'));
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, data: {
+                "action": "abprf_loc_delete", "loc_id": loc_id, 'nonce': abprf_admin_data.nonce
+            },
+            beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.deleting, 'error');
+            },
+            success: function (response) {
+                abprf_spinner_remove(parent);
+                abprf_toast_msg(response.data.msg);
+                parent.html(response.data.html);
+            }
+        });
+    });
+    $(document).on("rf_trigger", "div.abprf_admin [data-target-popup='#abprf_location_popup']", function () {
+        let loc_id = $(this).attr('data-loc_id');
+        loc_id = (typeof loc_id !== 'undefined' && loc_id !== false) ? parseInt(loc_id) : '';
+        let target_id = $(this).attr('data-active-popup', '').data('target-popup');
+        let parent = $('body').find('[data-popup="' + target_id + '"]').find('.popup_area');
+        let target = parent.find('.popup_body');
+        let page_type = $('body').find('.loc_selection').length > 0 ? 'post' : 0;
+        page_type = $('body').find('.location_list').length > 0 ? 'list' : page_type;
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, data: {
+                "action": "abprf_loc_add_edit", 'loc_id': loc_id, "page_type": page_type, 'nonce': abprf_admin_data.nonce
+            }, beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.loading);
+            }, success: function (data) {
+                target.html(data).promise().done(function () {
+                    abprf_spinner_remove(parent);
+                    abprf_toast_msg(abprf_admin_data.msg.loaded, 'success');
+                });
+            }
+        })
+    });
+    //==========Brand configuration=================//
+    $(document).on('submit', 'div.abprf_admin form.save_brand', function (e) {
+        e.preventDefault();
+        let target = $(this);
+        let formData = new FormData(this);
+        formData.append('action', 'abprf_save_brand');
+        formData.append('nonce', abprf_admin_data.nonce);
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
+            beforeSend: function () {
+                abprf_spinner(target);
+                abprf_toast_msg(abprf_admin_data.msg.saving);
+            },
+            success: function (response) {
+                abprf_spinner_remove(target);
+                abprf_toast_msg(response.data.msg, 'success');
+                if ($('body').find('div.abprf_admin .brand_list').length > 0) {
+                    $('body').find('div.abprf_admin .brand_list').html(response.data.html);
+                }
+                if ($('body').find('div.abprf_admin .brand_selection').length > 0) {
+                    $('body').find('div.abprf_admin .brand_selection').html(response.data.html);
+                }
+                abprf_popup_close();
+            }
+        });
+    });
+    $(document).on('click', 'div.abprf_admin button.abprf_brand_delete', function (e) {
+        e.preventDefault();
+        let parent = $(this).closest('.brand_list');
+        let brand_id = parseInt($(this).attr('data-brand_id'));
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, data: {
+                "action": "abprf_brand_delete", "brand_id": brand_id, 'nonce': abprf_admin_data.nonce
+            },
+            beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.deleting, 'error');
+            },
+            success: function (response) {
+                abprf_spinner_remove(parent);
+                abprf_toast_msg(response.data.msg);
+                parent.html(response.data.html);
+            }
+        });
+    });
+    $(document).on("rf_trigger", "div.abprf_admin [data-target-popup='#abprf_brand_popup']", function () {
+        let brand_id = $(this).attr('data-brand_id');
+        brand_id = (typeof brand_id !== 'undefined' && brand_id !== false) ? parseInt(brand_id) : '';
+        let target_id = $(this).attr('data-active-popup', '').data('target-popup');
+        let parent = $('body').find('[data-popup="' + target_id + '"]').find('.popup_area');
+        let target = parent.find('.popup_body');
+        let page_type = $('body').find('.brand_selection').length > 0 ? 'post' : 0;
+        page_type = $('body').find('.brand_list').length > 0 ? 'list' : page_type;
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, data: {
+                "action": "abprf_brand_add_edit", 'brand_id': brand_id, "page_type": page_type, 'nonce': abprf_admin_data.nonce
+            }, beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.loading);
+            }, success: function (data) {
+                target.html(data).promise().done(function () {
+                    abprf_spinner_remove(parent);
+                    abprf_toast_msg(abprf_admin_data.msg.loaded, 'success');
+                });
+            }
+        })
+    });
+    //==========Feature configuration=================//
+    $(document).on('submit', 'div.abprf_admin form.save_feature', function (e) {
+        e.preventDefault();
+        let target = $(this);
+        let parent =target.closest('.feature_area');
+        let formData = new FormData(this);
+        formData.append('action', 'abprf_save_feature');
+        formData.append('nonce', abprf_admin_data.nonce);
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
+            beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.saving);
+            },
+            success: function (response) {
+                abprf_spinner_remove(parent);
+                abprf_toast_msg(response.data.msg, 'success');
+                parent.find('.feature_list').html(response.data.html);
+                parent.find('.insertable_area').html('');
+                parent.find('.hide_on_load').slideUp('fast');
+            }
+        });
+    });
+    $(document).on('click', 'div.abprf_admin button.abprf_feature_delete', function (e) {
+        e.preventDefault();
+        let target = $(this);
+        let parent =target.closest('.feature_area');
+        let fec_id = $(this).attr('data-fec_id');
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, data: {
+                "action": "abprf_feature_delete", "fec_id": fec_id, 'nonce': abprf_admin_data.nonce
+            },
+            beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.deleting, 'error');
+            },
+            success: function (response) {
+                abprf_spinner_remove(parent);
+                abprf_toast_msg(response.data.msg);
+                parent.find('.feature_list').html(response.data.html);
+                parent.find('.hide_on_load').slideUp('fast');
+            }
+        });
+    });
+    $(document).on('click', 'div.abprf_admin button.abprf_feature_edit', function (e) {
+        e.preventDefault();
+        let target = $(this);
+        let parent =target.closest('.feature_area');
+        let fec_id = $(this).attr('data-fec_id');
+        $.ajax({
+            type: 'POST', url: abprf_admin_data.ajax_url, data: {
+                "action": "abprf_feature_edit", "fec_id": fec_id, 'nonce': abprf_admin_data.nonce
+            },
+            beforeSend: function () {
+                abprf_spinner(parent);
+                abprf_toast_msg(abprf_admin_data.msg.deleting, 'error');
+            },
+            success: function (response) {
+                abprf_spinner_remove(parent);
+                abprf_toast_msg(response.data.msg);
+                parent.find('.insertable_area').html(response.data.html);
+                parent.find('.hide_on_load').slideDown();
+            }
+        });
+    });
+    $(document).on('rf_trigger', 'div.abprf_admin form.save_feature .add_new_hook', function () {
+        $(this).closest('.feature_area').find('.hide_on_load').slideDown(300);
     });
     //==========Faq configuration=================//
     $(document).on('submit', 'div.abprf_admin form.save_faq', function (e) {
